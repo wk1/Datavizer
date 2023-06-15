@@ -1,5 +1,5 @@
 figma.showUI(__html__, {
-  height: 620,
+  height: 820,
   width: 760,
 });
 
@@ -35,6 +35,15 @@ figma.ui.onmessage = ({ type, data, chartConfig, fields, dimensions }) => {
       });
     if (chartConfig.type == "scatter")
       drawScatter({
+        chartConfig,
+        data,
+        fields,
+        dimensions,
+        nodes,
+        position,
+      });
+    if (chartConfig.type == "rectScatter")
+      drawRectScatter({
         chartConfig,
         data,
         fields,
@@ -151,6 +160,41 @@ const drawScatter = ({
   });
 };
 
+const drawRectScatter = ({
+  chartConfig,
+  data,
+  fields,
+  dimensions,
+  nodes,
+  position = [],
+}) => {
+  data.forEach((d: dataPoint, i: number) => {
+    const x = position[0];
+    const y = position[1];
+    const rect = figma.createRectangle();
+    rect.resize(d.width, fields.rectHeight);
+    rect.cornerRadius = fields.cornerRadius;
+    rect.x = x + d.xScaled;
+    rect.y = y + d.yScaled;
+    rect.fills = darkColorPaint;
+    if (d.color) {
+      rect.fills = [
+        {
+          type: "SOLID",
+          color: {
+            r: getRGBProp(d.colorScaled, "r"),
+            g: getRGBProp(d.colorScaled, "g"),
+            b: getRGBProp(d.colorScaled, "b"),
+          },
+        },
+      ];
+    }
+    figma.currentPage.appendChild(rect);
+
+    nodes.push(rect);
+  });
+};
+
 const getRGBProp = (color: string, property: string) => {
   if (!color) return 255;
   const index = ["r", "g", "b"].indexOf(property);
@@ -237,4 +281,5 @@ interface dataPoint {
   readonly xScaled: number;
   readonly color: number;
   readonly colorScaled: string;
+  readonly width: number;
 }
